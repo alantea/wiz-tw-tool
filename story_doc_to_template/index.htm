@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+    <title>黑貓維茲 wikia 文本轉模板</title>
+    <style>
+        .area {
+            display: inline-block;
+            width: 40%;
+            min-height: 80%;
+            vertical-align: top;
+        }
+        .space {
+            display: inline-block;
+            width: 15%;
+            vertical-align: top;
+            margin: 0px 10px;
+        }
+        textarea {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <script>
+        $(function(){
+            $("#origin").on("input", function(){
+                $("#translate").val("");
+                var data = this.value.split("\n");
+                var idx = 0;
+                var row;
+                var res = "", content_res = "";
+                
+                var title_num, title;
+                var name_num, name, count;
+
+                count = 0;
+                name = [];
+                content_res = "";
+                // idx and title
+                row = data[0].trim().split(" ");
+                title_num = row[0];
+                title = row.slice(1).join(" ");
+                idx++;
+
+                // get name
+                for(; idx < data.length; idx++) {
+                    if(data[idx].trim() !== "") {
+                        break;
+                    }
+                }
+
+                name.push("");
+                if(idx < data.length && data[idx].trim() !== "沒有名字") {
+                    for(; idx < data.length; idx++) {
+                        if(data[idx].trim() === "") {
+                            break;
+                        }
+                        name.push(data[idx].trim());
+                    }
+                }
+                else if(idx < data.length && data[idx].trim() === "沒有名字") {
+                    idx++;
+                }
+
+                // content
+                for(; idx < data.length;) {
+                    if(data[idx].trim() == "") {
+                        idx++;
+                        continue;
+                    }
+
+                    count++;
+                    // get name or content
+                    name_num = name.indexOf(data[idx].trim());
+                    if(name.indexOf(data[idx].trim()) != -1) {
+                        // is name, move idx
+                        idx++;
+                    }
+
+                    row = [];
+                    for(; idx < data.length; idx++) {
+                        if(data[idx].trim() == "") {
+                            break;
+                        }
+                        row.push(data[idx].trim());
+                    }
+                    content_res +=
+`            |${count}={{ #switch: {{{detail}}}
+            |name=${name_num}
+            |diag=${row.join("<br>")}
+            |diag_noQuotation=true
+        }}
+`;
+                }
+
+                res +=
+`{{ #switch: {{{id}}}
+|${title_num}={{ #switch: {{{data}}}
+    |title=《${title}》
+    |max=${count}
+    |name={{ #switch: {{{detail}}}
+        |-1=
+`;
+                for(var i = 1; i < name.length; i++) {
+                    res +=
+`        |${i}=${name[i]}
+`;
+                }
+                res +=
+`    }}
+`;
+                res += content_res;
+                res +=
+`}}
+`;
+                $("#translate").val(res);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="area">
+        文本：<br>
+        <textarea rows="30" id="origin"></textarea>
+    </div>
+    <div class="space">
+        <p>
+            <h2>使用說明：</h2>
+            <p>
+                <input type="button" id="generate_example" value="產生範例"><br><br>
+                1. 請一個單元一個單元貼上
+            </p>
+            <h2>注意事項：</h2>
+            <p>
+                1. 不做內容驗證，若未按照規格，可能會發生錯誤<br><br>
+                2. 若該單元沒有人物出現，請寫 "沒有名字"
+            </p>
+        </p>
+    </div>
+    <div class="area">
+        模板：<br>
+        <textarea rows="30" id="translate"></textarea>
+    </div>
+</body>
+</html>
